@@ -263,9 +263,9 @@ export default function ResidentApp() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       {/* Dynamic Header */}
-      <header className="bg-white px-6 pt-8 pb-6 rounded-b-[40px] shadow-sm border-b border-slate-100">
+      <header className="bg-white px-6 pt-8 pb-6 rounded-b-3xl shadow-sm border-b border-slate-100">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-black text-slate-900 leading-tight">
@@ -290,7 +290,7 @@ export default function ResidentApp() {
         {/* STEP 1: CHOICE */}
         {syncStep === 'choice' && (
           <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-            <div className="bg-[#1E40AF] p-6 rounded-[32px] text-white shadow-xl shadow-blue-900/20 relative overflow-hidden">
+            <div className="bg-[#1E40AF] p-6 rounded-3xl text-white shadow-xl shadow-blue-900/20 relative overflow-hidden">
                <div className="relative z-10">
                   <h2 className="text-lg font-bold mb-2">
                     {isReturningUser ? "Welcome back to SmartHealthIndex!" : "Help QC Build Better Parks"}
@@ -336,7 +336,7 @@ export default function ResidentApp() {
               <ArrowRight className="w-5 h-5 text-slate-300" />
             </button>
 
-            <div className="flex items-start gap-3 p-4 bg-slate-200/50 rounded-2xl border border-slate-200">
+            <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                <ShieldCheck className="w-5 h-5 text-slate-400 mt-0.5" />
                <p className="text-[10px] text-slate-500 leading-tight">
                   Your privacy matters. We only collect anonymized activity counts tied to your Barangay. No names or GPS routes are stored. (RA 10173 Compliant)
@@ -349,7 +349,7 @@ export default function ResidentApp() {
         {syncStep === 'manual' && (
           <div className="animate-in slide-in-from-right-4 duration-300">
             <button onClick={() => setSyncStep('choice')} className="text-xs font-bold text-slate-400 mb-6 flex items-center gap-1 hover:text-slate-700">← Go Back</button>
-            <form onSubmit={handleManualSubmit} className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-100 space-y-6">
+            <form onSubmit={handleManualSubmit} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 space-y-6">
               
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-black text-slate-900">Manual Entry</h2>
@@ -361,18 +361,18 @@ export default function ResidentApp() {
               </div>
 
               {/* INPUT TYPE TOGGLE */}
-              <div className="flex bg-slate-100 p-1 rounded-xl">
+              <div className="flex bg-slate-100 p-1 rounded-lg">
                 <button
                   type="button"
                   onClick={() => setEntryType('daily')}
-                  className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${entryType === 'daily' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 text-xs font-bold py-2 rounded-md transition-all ${entryType === 'daily' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   Daily Log
                 </button>
                 <button
                   type="button"
                   onClick={() => setEntryType('baseline')}
-                  className={`flex-1 text-xs font-bold py-2 rounded-lg transition-all ${entryType === 'baseline' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  className={`flex-1 text-xs font-bold py-2 rounded-md transition-all ${entryType === 'baseline' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   One-Time Baseline
                 </button>
@@ -386,7 +386,7 @@ export default function ResidentApp() {
                   <select 
                     value={formData.barangay_id}
                     onChange={(e) => setFormData({...formData, barangay_id: e.target.value})}
-                    className="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold text-sm outline-none focus:ring-2 ring-indigo-500/20"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-bold text-sm outline-none focus:border-[#1E40AF] transition-all"
                   >
                     {barangays.length === 0 && <option>Loading...</option>}
                     {barangays.map(b => (
@@ -402,7 +402,7 @@ export default function ResidentApp() {
                   <select 
                     value={formData.age_group}
                     onChange={(e) => setFormData({...formData, age_group: e.target.value})}
-                    className="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold text-sm outline-none focus:ring-2 ring-indigo-500/20"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-bold text-sm outline-none focus:border-[#1E40AF] transition-all"
                   >
                     <option value="18-24">18-24 yrs</option>
                     <option value="25-34">25-34 yrs</option>
@@ -424,7 +424,7 @@ export default function ResidentApp() {
                   value={formData.steps}
                   onChange={(e) => setFormData({...formData, steps: e.target.value})}
                   placeholder="e.g. 7500"
-                  className="w-full p-4 bg-slate-50 rounded-2xl border-none font-black text-2xl outline-none focus:ring-2 ring-indigo-500/20"
+                  className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-2xl outline-none focus:border-[#1E40AF] transition-all"
                 />
               </div>
 
@@ -438,7 +438,7 @@ export default function ResidentApp() {
                     value={formData.mins}
                     onChange={(e) => setFormData({...formData, mins: e.target.value})}
                     placeholder={entryType === 'daily' ? "Mins today" : "Total this week"}
-                    className="w-full p-4 bg-slate-50 rounded-2xl border-none font-black text-2xl outline-none focus:ring-2 ring-indigo-500/20"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-2xl outline-none focus:border-[#1E40AF] transition-all"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-sm">MINS</span>
                 </div>
@@ -452,7 +452,7 @@ export default function ResidentApp() {
               <button 
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 bg-[#1E40AF] text-white rounded-2xl font-black shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center disabled:opacity-70 disabled:active:scale-100"
+                className="w-full py-4 bg-[#1E40AF] text-white rounded-2xl font-black shadow-lg shadow-blue-900/20 hover:bg-blue-800 active:scale-95 transition-all flex items-center justify-center disabled:opacity-70 disabled:active:scale-100"
               >
                 {isSubmitting ? (
                   <><Loader2 className="w-5 h-5 animate-spin mr-2" /> COMPUTING & SAVING...</>
@@ -467,7 +467,7 @@ export default function ResidentApp() {
         {/* STEP 2: STRAVA CONNECT */}
         {syncStep === 'strava' && (
           <div className="text-center py-10 animate-in fade-in duration-500">
-            <div className="w-24 h-24 bg-orange-100 rounded-[32px] flex items-center justify-center mx-auto mb-6">
+            <div className="w-24 h-24 bg-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
               <Dribbble className="w-12 h-12 text-orange-600" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 mb-4">Connect Strava</h2>
