@@ -245,7 +245,7 @@ export default function ResidentApp() {
 
   const handleDownloadAccept = () => {
     // Replace this URL with your actual public Google Cloud Storage link
-    const apkUrl = 'https://drive.google.com/file/d/1iRAUESd-wha2er5xq_5rVHWCf5vn4o3P/view?usp=sharing';
+    const apkUrl = 'https://drive.google.com/file/d/1WMDg25TBYkafDwR-W1LdssoAcXmoVLZS/view?usp=sharing';
     
     // Create an invisible anchor tag to trigger the browser's download manager
     const link = document.createElement('a');
@@ -333,7 +333,7 @@ export default function ResidentApp() {
               </div>
               <div className="text-left flex-grow">
                 <h4 className="font-bold text-slate-900">Connect Gadget</h4>
-                <p className="text-xs text-slate-500">Download the SHI-Sync App</p>
+                <p className="text-xs text-slate-500">Download the SHI-Sync App (Android only)</p>
               </div>
               <ArrowRight className="w-5 h-5 text-slate-300" />
             </button>
