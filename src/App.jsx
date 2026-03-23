@@ -243,6 +243,22 @@ export default function ResidentApp() {
     }
   };
 
+  const handleDownloadAccept = () => {
+    // Replace this URL with your actual public Google Cloud Storage link
+    const apkUrl = 'https://drive.google.com/file/d/1RwOsqesaJlQ8SHc61eWLCTuv97C_wtah/view?usp=sharing';
+    
+    // Create an invisible anchor tag to trigger the browser's download manager
+    const link = document.createElement('a');
+    link.href = apkUrl;
+    link.setAttribute('download', 'shi_sync.apk'); // Suggests the filename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Go back to the main menu after initiating the download
+    setSyncStep('choice');
+  };
+
   const simulateStravaSync = () => {
     setSyncStep('strava-loading');
     setTimeout(() => setSyncStep('success'), 2000);
@@ -309,15 +325,15 @@ export default function ResidentApp() {
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest px-2">How would you like to contribute?</h3>
             
             <button 
-              onClick={() => setSyncStep('strava')}
-              className="w-full bg-white p-5 rounded-3xl border-2 border-slate-100 shadow-sm flex items-center gap-4 hover:border-orange-500 transition-all group"
+              onClick={() => setSyncStep('gadget-download')}
+              className="w-full bg-white p-5 rounded-3xl border-2 border-slate-100 shadow-sm flex items-center gap-4 hover:border-[#1E40AF] transition-all group"
             >
-              <div className="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                <Dribbble className="w-8 h-8" />
+              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-[#1E40AF] group-hover:bg-[#1E40AF] group-hover:text-white transition-colors">
+                <Activity className="w-8 h-8" />
               </div>
               <div className="text-left flex-grow">
-                <h4 className="font-bold text-slate-900">Connect Strava</h4>
-                <p className="text-xs text-slate-500">Automatic daily sync</p>
+                <h4 className="font-bold text-slate-900">Connect Gadget</h4>
+                <p className="text-xs text-slate-500">Download the SHI-Sync App</p>
               </div>
               <ArrowRight className="w-5 h-5 text-slate-300" />
             </button>
@@ -464,23 +480,32 @@ export default function ResidentApp() {
           </div>
         )}
 
-        {/* STEP 2: STRAVA CONNECT */}
-        {syncStep === 'strava' && (
+        {/* STEP 2: GADGET DOWNLOAD PROMPT */}
+        {syncStep === 'gadget-download' && (
           <div className="text-center py-10 animate-in fade-in duration-500">
-            <div className="w-24 h-24 bg-orange-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Dribbble className="w-12 h-12 text-orange-600" />
+            <div className="w-24 h-24 bg-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Activity className="w-12 h-12 text-[#1E40AF]" />
             </div>
-            <h2 className="text-2xl font-black text-slate-900 mb-4">Connect Strava</h2>
+            <h2 className="text-2xl font-black text-slate-900 mb-4">App Required</h2>
             <p className="text-slate-500 text-sm mb-8 px-6">
-              Clicking below will securely authorize SmartHealthIndex to read your daily activity totals from Strava.
+              To automatically sync your gadget, you need to download and install the secure SHI-Sync application. Do you want to download the app now?
             </p>
-            <button 
-              onClick={simulateStravaSync}
-              className="w-full py-4 bg-[#FC4C02] text-white rounded-2xl font-black shadow-lg shadow-orange-900/20 flex items-center justify-center gap-3 active:scale-95 transition-all"
-            >
-              AUTHORIZE STRAVA
-            </button>
-            <button onClick={() => setSyncStep('choice')} className="mt-4 text-xs font-bold text-slate-400 hover:text-slate-700">Cancel</button>
+            
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={handleDownloadAccept}
+                className="w-full py-4 bg-[#1E40AF] text-white rounded-2xl font-black shadow-lg shadow-blue-900/20 active:scale-95 transition-all"
+              >
+                ACCEPT & DOWNLOAD
+              </button>
+              
+              <button 
+                onClick={() => setSyncStep('choice')}
+                className="w-full py-4 bg-white text-slate-500 border-2 border-slate-200 rounded-2xl font-black hover:bg-slate-50 active:scale-95 transition-all"
+              >
+                REJECT
+              </button>
+            </div>
           </div>
         )}
 
