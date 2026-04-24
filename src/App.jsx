@@ -67,11 +67,9 @@ export default function ResidentApp() {
   const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
-  const [entryType, setEntryType] = useState('daily'); // 'daily' or 'baseline'
   
   // Database & Local States
   const [barangays, setBarangays] = useState([]);
-  const [localHistory, setLocalHistory] = useState([]);
   const [formData, setFormData] = useState({ 
     steps: '', 
     mins: '', 
@@ -92,9 +90,6 @@ export default function ResidentApp() {
     // Check local storage for identity and past history
     const existingResidentId = localStorage.getItem('smarthealthindex_resident_id');
     if (existingResidentId) setIsReturningUser(true);
-
-    const savedHistory = JSON.parse(localStorage.getItem('smarthealthindex_activity_history') || '[]');
-    setLocalHistory(savedHistory);
 
     // Retrieve previously saved age group if it exists
     const savedAgeGroup = localStorage.getItem('smarthealthindex_age_group');
@@ -121,49 +116,6 @@ export default function ResidentApp() {
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
       let dbMins = parseInt(formData.mins) || 0;
-      let updatedHistory = [...localHistory];
-
-      // ==========================================
-      // ROLLING 7-DAY AVERAGE ALGORITHM
-      // ==========================================
-      if (entryType === 'daily') {
-        const todayStr = new Date().toISOString().split('T')[0];
-        
-        // Calculate the date 7 days ago
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-
-        // 1. Filter out history older than 7 days, and remove any existing entry for TODAY (to allow overwriting)
-        updatedHistory = updatedHistory.filter(h => h.date !== todayStr && h.date >= sevenDaysAgoStr);
-        
-        // 2. Add today's new input
-        updatedHistory.push({
-          date: todayStr,
-          steps: dbSteps,
-          mins: dbMins
-        });
-
-        // 3. Save back to local storage and state for the progress UI
-        localStorage.setItem('smarthealthindex_activity_history', JSON.stringify(updatedHistory));
-        setLocalHistory(updatedHistory);
-
-        // 4. Calculate Rolling Averages (Strictly disregarding zero-input days to prevent skewing)
-        const validStepDays = updatedHistory.filter(h => h.steps > 0);
-        const validMinDays = updatedHistory.filter(h => h.mins > 0);
-
-        const rollingAvgSteps = validStepDays.length > 0 
-          ? Math.round(validStepDays.reduce((sum, h) => sum + h.steps, 0) / validStepDays.length)
-          : dbSteps;
-
-        const rollingAvgMins = validMinDays.length > 0 
-          ? Math.round(validMinDays.reduce((sum, h) => sum + h.mins, 0) / validMinDays.length)
-          : dbMins;
-
-        // Replace raw daily inputs with the highly accurate rolling averages for the database
-        dbSteps = rollingAvgSteps;
-        dbMins = rollingAvgMins;
-      }
 
       // ==========================================
       // DATABASE SYNC LOGIC
@@ -269,15 +221,6 @@ export default function ResidentApp() {
     return bgy ? bgy.name : 'Your Barangay';
   };
 
-  // Helper for displaying progress
-  const activeDaysCount = localHistory.filter(h => h.steps > 0 || h.mins > 0).length;
-  const displayAvgSteps = activeDaysCount > 0 
-    ? Math.round(localHistory.filter(h=>h.steps>0).reduce((s, h) => s + h.steps, 0) / (localHistory.filter(h=>h.steps>0).length || 1))
-    : 0;
-  const displayAvgMins = activeDaysCount > 0 
-    ? Math.round(localHistory.filter(h=>h.mins>0).reduce((s, h) => s + h.mins, 0) / (localHistory.filter(h=>h.mins>0).length || 1))
-    : 0;
-
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       {/* Dynamic Header */}
@@ -376,23 +319,6 @@ export default function ResidentApp() {
                 )}
               </div>
 
-              {/* INPUT TYPE TOGGLE */}
-              <div className="flex bg-slate-100 p-1 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setEntryType('daily')}
-                  className={`flex-1 text-xs font-bold py-2 rounded-md transition-all ${entryType === 'daily' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  Daily Log
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEntryType('baseline')}
-                  className={`flex-1 text-xs font-bold py-2 rounded-md transition-all ${entryType === 'baseline' ? 'bg-white text-[#1E40AF] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                  One-Time Baseline
-                </button>
-              </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -432,7 +358,7 @@ export default function ResidentApp() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                  <Zap className="w-3 h-3" /> {entryType === 'daily' ? "Steps Today" : "Avg. Daily Steps"}
+                  <Zap className="w-3 h-3" /> Avg. Daily Steps
                 </label>
                 <input 
                   type="number" 
@@ -446,22 +372,20 @@ export default function ResidentApp() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> {entryType === 'daily' ? "Exercise Duration Today" : "Avg. Weekly Exercise"}
+                  <Clock className="w-3 h-3" /> Avg. Weekly Exercise
                 </label>
                 <div className="relative">
                   <input 
                     type="number" 
                     value={formData.mins}
                     onChange={(e) => setFormData({...formData, mins: e.target.value})}
-                    placeholder={entryType === 'daily' ? "Mins today" : "Total this week"}
+                    placeholder="Total this week"
                     className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-2xl outline-none focus:border-[#1E40AF] transition-all"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-sm">MINS</span>
                 </div>
                 <p className="text-[10px] text-slate-400 italic px-1">
-                  {entryType === 'daily' 
-                    ? "Intentional physical activity done today. (Rolling averages are calculated automatically)." 
-                    : "Your estimated weekly intentional physical activity total."}
+                  Your estimated weekly intentional physical activity total.
                 </p>
               </div>
 
@@ -473,7 +397,7 @@ export default function ResidentApp() {
                 {isSubmitting ? (
                   <><Loader2 className="w-5 h-5 animate-spin mr-2" /> COMPUTING & SAVING...</>
                 ) : (
-                  isReturningUser && entryType === 'daily' ? 'UPDATE TODAY\'S LOG' : 'SUBMIT TO DATABASE'
+                  'SUBMIT TO DATABASE'
                 )}
               </button>
             </form>
@@ -519,32 +443,6 @@ export default function ResidentApp() {
             <p className="text-slate-500 text-sm mb-8">
               Your contribution has been securely synced to the Quezon City database.
             </p>
-
-            {/* NEW: PERSONAL PROGRESS TRACKER (Only for Daily Logs) */}
-            {entryType === 'daily' && localHistory.length > 0 && (
-              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-4 text-left">
-                <div className="flex items-center gap-2 mb-4">
-                  <Activity className="w-4 h-4 text-indigo-600" />
-                  <p className="text-xs font-black text-slate-900 uppercase tracking-widest">Personal Progress (Last 7 Days)</p>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-50">
-                    <span className="text-sm font-bold text-slate-500">Active Days Logged:</span>
-                    <span className="font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">{activeDaysCount}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-50">
-                    <span className="text-sm font-bold text-slate-500">Rolling Avg Steps:</span>
-                    <span className="font-black text-teal-600">{displayAvgSteps.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-slate-500">Rolling Avg Mins:</span>
-                    <span className="font-black text-amber-600">{displayAvgMins} mins</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-400 italic mt-4 text-center">These calculated averages were securely sent to your Barangay's baseline.</p>
-              </div>
-            )}
 
             {/* BARANGAY PROGRESS */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-8 text-left">
