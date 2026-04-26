@@ -225,21 +225,15 @@ export default function ResidentApp() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
       {/* Dynamic Header */}
       <header className="bg-white px-6 pt-8 pb-6 rounded-b-3xl shadow-sm border-b border-slate-100">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 leading-tight">
-              My Health <br/><span className="text-[#1E40AF]">Contribution</span>
-            </h1>
-            <div className="flex items-center gap-1 mt-2 bg-slate-100 px-3 py-1 rounded-full w-fit">
-              <MapPin className="w-3 h-3 text-slate-500" />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Quezon City Resident</span>
+        <div className="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#1E40AF] text-white p-1.5 rounded-lg border border-blue-800">
+              <span className="font-black text-xs">QC</span>
             </div>
-          </div>
-          <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center border border-indigo-100 relative">
-            <Heart className="w-6 h-6 text-indigo-600 fill-indigo-600" />
-            {isReturningUser && (
-               <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white"></div>
-            )}
+            <div>
+              <h1 className="font-bold text-sm leading-none">Resident Portal</h1>
+              <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-0.5">Self-service Input</p>
+            </div>
           </div>
         </div>
       </header>
