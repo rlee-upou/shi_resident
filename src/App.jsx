@@ -66,6 +66,7 @@ const supabase = createClient(supabaseUrl, supabaseKey); // Swap to createClient
 // Constants for local storage keys
 const RESIDENT_ID_KEY = 'smarthealthindex_resident_id';
 const AGE_GROUP_KEY = 'smarthealthindex_age_group';
+const BARANGAY_ID_KEY = 'smarthealthindex_barangay_id';
 
 export default function ResidentApp() {
   const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
@@ -87,7 +88,11 @@ export default function ResidentApp() {
       const { data, error } = await supabase.from('barangays').select('id, name');
       if (data && data.length > 0) {
         setBarangays(data);
-        setFormData(prev => ({ ...prev, barangay_id: data[0].id.toString() }));
+        setFormData(prev => {
+          // Only default to the first barangay if we haven't loaded a previous state
+          if (prev.barangay_id) return prev;
+          return { ...prev, barangay_id: data[0].id.toString() };
+        });
       }
     }
     
@@ -96,10 +101,16 @@ export default function ResidentApp() {
       const existingResidentId = localStorage.getItem(RESIDENT_ID_KEY);
       if (existingResidentId) setIsReturningUser(true);
 
-      // Retrieve previously saved age group if it exists
+      // Retrieve previously saved preferences if they exist
       const savedAgeGroup = localStorage.getItem(AGE_GROUP_KEY);
-      if (savedAgeGroup) {
-        setFormData(prev => ({ ...prev, age_group: savedAgeGroup }));
+      const savedBarangayId = localStorage.getItem(BARANGAY_ID_KEY);
+      
+      if (savedAgeGroup || savedBarangayId) {
+        setFormData(prev => ({ 
+          ...prev, 
+          ...(savedAgeGroup && { age_group: savedAgeGroup }),
+          ...(savedBarangayId && { barangay_id: savedBarangayId })
+        }));
       }
     } catch (error) {
       console.error("Could not access local storage:", error);
@@ -120,6 +131,7 @@ export default function ResidentApp() {
 
       // Save the selected age group to local storage for their next visit
       localStorage.setItem(AGE_GROUP_KEY, formData.age_group);
+      localStorage.setItem(BARANGAY_ID_KEY, formData.barangay_id);
 
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
@@ -461,7 +473,7 @@ export default function ResidentApp() {
             
             <button 
               onClick={() => {
-                setFormData({ steps: '', mins: '', barangay_id: barangays[0]?.id.toString() || '', age_group: formData.age_group });
+                setFormData(prev => ({ ...prev, steps: '', mins: '' })); // Keep user's selections, clear inputs
                 setSyncStep('choice');
               }}
               className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black active:scale-95 transition-all"
