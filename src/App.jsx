@@ -129,6 +129,11 @@ export default function ResidentApp() {
     try {
       let currentResidentId = localStorage.getItem(RESIDENT_ID_KEY);
 
+      // Safety check in case previous bugs saved "undefined" or "null" as a string
+      if (currentResidentId === "undefined" || currentResidentId === "null") {
+        currentResidentId = null;
+      }
+
       // Save the selected age group to local storage for their next visit
       localStorage.setItem(AGE_GROUP_KEY, formData.age_group);
       localStorage.setItem(BARANGAY_ID_KEY, formData.barangay_id);
@@ -159,10 +164,19 @@ export default function ResidentApp() {
         localStorage.setItem(RESIDENT_ID_KEY, currentResidentId); 
       } else {
         // Update their age group just in case they changed it in the form
-        await supabase
+        const { data: updatedResident, error: updateResidentError } = await supabase
           .from('residents')
           .update({ age_group: formData.age_group })
-          .eq('id', currentResidentId);
+          .eq('id', currentResidentId)
+          .select();
+
+        if (updateResidentError) throw updateResidentError;
+
+        // If the DB was cleared during testing, the ID in localStorage is stale.
+        if (!updatedResident || updatedResident.length === 0) {
+          localStorage.removeItem(RESIDENT_ID_KEY);
+          throw new Error("Profile not found in database. Local memory has been reset. Please press submit again.");
+        }
       }
 
       // 2. DAILY DEDUPLICATION CHECK
@@ -212,7 +226,8 @@ export default function ResidentApp() {
       if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'SecurityError')) {
         alert("Could not save your data. Your browser's local storage might be full or disabled. Please check your browser settings.");
       } else {
-        alert("Something went wrong saving your data. Please try again.");
+        // Include the actual error message so it can be read on mobile screens
+        alert(`Something went wrong saving your data: ${error.message || JSON.stringify(error)}. Please try again.`);
       }
     } finally {
       setIsSubmitting(false);
