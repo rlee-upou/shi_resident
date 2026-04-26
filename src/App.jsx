@@ -89,8 +89,9 @@ export default function ResidentApp() {
       if (data && data.length > 0) {
         setBarangays(data);
         setFormData(prev => {
-          // Only default to the first barangay if we haven't loaded a previous state
-          if (prev.barangay_id) return prev;
+          // Check if the previously saved barangay_id still exists in the database
+          const isBarangayValid = prev.barangay_id && data.some(b => b.id.toString() === prev.barangay_id);
+          if (isBarangayValid) return prev;
           return { ...prev, barangay_id: data[0].id.toString() };
         });
       }
@@ -163,10 +164,13 @@ export default function ResidentApp() {
         currentResidentId = residentData.id;
         localStorage.setItem(RESIDENT_ID_KEY, currentResidentId); 
       } else {
-        // Update their age group just in case they changed it in the form
+        // Update their age group and barangay just in case they changed it in the form
         const { data: updatedResident, error: updateResidentError } = await supabase
           .from('residents')
-          .update({ age_group: formData.age_group })
+          .update({ 
+            age_group: formData.age_group,
+            barangay_id: parseInt(formData.barangay_id)
+          })
           .eq('id', currentResidentId)
           .select();
 
