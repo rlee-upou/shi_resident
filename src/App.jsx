@@ -231,8 +231,8 @@ export default function ResidentApp() {
               <span className="font-black text-xs">QC</span>
             </div>
             <div>
-              <h1 className="font-bold text-sm leading-none">Resident Portal</h1>
-              <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-0.5">Self-service Input</p>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900">Resident Portal</h1>
+              <p className="text-slate-500 text-sm font-medium">Self-service Input</p>
             </div>
           </div>
         </div>
