@@ -63,6 +63,10 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
 const supabase = createClient(supabaseUrl, supabaseKey); // Swap to createClient for production
 
+// Constants for local storage keys
+const RESIDENT_ID_KEY = 'smarthealthindex_resident_id';
+const AGE_GROUP_KEY = 'smarthealthindex_age_group';
+
 export default function ResidentApp() {
   const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,15 +92,19 @@ export default function ResidentApp() {
     }
     
     // Check local storage for identity and past history
-    const existingResidentId = localStorage.getItem('smarthealthindex_resident_id');
-    if (existingResidentId) setIsReturningUser(true);
+    try {
+      const existingResidentId = localStorage.getItem(RESIDENT_ID_KEY);
+      if (existingResidentId) setIsReturningUser(true);
 
-    // Retrieve previously saved age group if it exists
-    const savedAgeGroup = localStorage.getItem('smarthealthindex_age_group');
-    if (savedAgeGroup) {
-      setFormData(prev => ({ ...prev, age_group: savedAgeGroup }));
+      // Retrieve previously saved age group if it exists
+      const savedAgeGroup = localStorage.getItem(AGE_GROUP_KEY);
+      if (savedAgeGroup) {
+        setFormData(prev => ({ ...prev, age_group: savedAgeGroup }));
+      }
+    } catch (error) {
+      console.error("Could not access local storage:", error);
+      // Optionally, inform the user that their progress won't be saved across sessions.
     }
-
     fetchBarangays();
   }, []);
 
@@ -108,10 +116,10 @@ export default function ResidentApp() {
     setIsSubmitting(true);
 
     try {
-      let currentResidentId = localStorage.getItem('smarthealthindex_resident_id');
+      let currentResidentId = localStorage.getItem(RESIDENT_ID_KEY);
 
       // Save the selected age group to local storage for their next visit
-      localStorage.setItem('smarthealthindex_age_group', formData.age_group);
+      localStorage.setItem(AGE_GROUP_KEY, formData.age_group);
 
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
@@ -136,7 +144,7 @@ export default function ResidentApp() {
         if (residentError) throw residentError;
         
         currentResidentId = residentData.id;
-        localStorage.setItem('smarthealthindex_resident_id', currentResidentId); 
+        localStorage.setItem(RESIDENT_ID_KEY, currentResidentId); 
       } else {
         // Update their age group just in case they changed it in the form
         await supabase
@@ -188,8 +196,12 @@ export default function ResidentApp() {
       setSyncStep('success');
       
     } catch (error) {
-      console.error("Database Error:", error);
-      alert("Something went wrong saving your data. Please try again.");
+      console.error("Submission Error:", error);
+      if (error instanceof DOMException && (error.name === 'QuotaExceededError' || error.name === 'SecurityError')) {
+        alert("Could not save your data. Your browser's local storage might be full or disabled. Please check your browser settings.");
+      } else {
+        alert("Something went wrong saving your data. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
