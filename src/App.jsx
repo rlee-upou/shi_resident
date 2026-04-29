@@ -77,9 +77,13 @@ export default function ResidentApp() {
   const [barangays, setBarangays] = useState([]);
   const [formData, setFormData] = useState({ 
     steps: '', 
-    mins: '', 
+    walkMins: '',  // REPLACED mins
+    runMins: '',   // NEW
+    bikeMins: '',  // NEW
+    otherMins: '', // NEW
     barangay_id: '',
-    age_group: '25-34' // Default age group
+    age_group: '25-34',
+    gender: 'Female' // NEW
   });
 
   // Initialization: Fetch Barangays & Load Local History
@@ -141,7 +145,13 @@ export default function ResidentApp() {
 
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
-      let dbMins = parseInt(formData.mins) || 0;
+      // Replace: let dbMins = parseInt(formData.mins) || 0;
+      
+      const walk = parseInt(formData.walkMins) || 0;
+      const run = parseInt(formData.runMins) || 0;
+      const bike = parseInt(formData.bikeMins) || 0;
+      const other = parseInt(formData.otherMins) || 0;
+      let dbMins = walk + run + bike + other;
 
       // ==========================================
       // DATABASE SYNC LOGIC
@@ -154,6 +164,7 @@ export default function ResidentApp() {
           .insert([{
             barangay_id: parseInt(formData.barangay_id),
             age_group: formData.age_group,
+            gender_at_birth: formData.gender, // NEW
             primary_source: 'WEB_PORTAL'
           }])
           .select()
@@ -169,7 +180,8 @@ export default function ResidentApp() {
           .from('residents')
           .update({ 
             age_group: formData.age_group,
-            barangay_id: parseInt(formData.barangay_id)
+            barangay_id: parseInt(formData.barangay_id),
+            gender_at_birth: formData.gender // NEW
           })
           .eq('id', currentResidentId)
           .select();
@@ -183,24 +195,27 @@ export default function ResidentApp() {
         }
       }
 
-      // 2. DAILY DEDUPLICATION CHECK
-      const todayStrDB = new Date().toISOString().split('T')[0]; 
+      // 2. SINGLE ENTRY CHECK: Find if the resident has ANY existing log
       const { data: existingLogs, error: checkError } = await supabase
         .from('activity_logs')
         .select('id')
         .eq('resident_id', currentResidentId)
-        .gte('local_timestamp', `${todayStrDB}T00:00:00.000Z`)
-        .lte('local_timestamp', `${todayStrDB}T23:59:59.999Z`);
+        .limit(1);
 
       if (checkError) throw checkError;
 
       if (existingLogs && existingLogs.length > 0) {
-        // SCENARIO A: Update today's existing database record
+        // SCENARIO A: Update the resident's single existing database record
         const { error: updateError } = await supabase
           .from('activity_logs')
           .update({
             daily_steps: dbSteps,
-            weekly_exercise_mins: dbMins
+            weekly_exercise_mins: dbMins,
+            walking_mins_weekly: walk,   // NEW
+            running_mins_weekly: run,    // NEW
+            biking_mins_weekly: bike,    // NEW
+            other_sports_mins_weekly: other, // NEW
+            local_timestamp: new Date().toISOString()
           })
           .eq('id', existingLogs[0].id);
 
@@ -215,6 +230,10 @@ export default function ResidentApp() {
             source_type: 'WEB_PORTAL',
             daily_steps: dbSteps,
             weekly_exercise_mins: dbMins,
+            walking_mins_weekly: walk,   // NEW
+            running_mins_weekly: run,    // NEW
+            biking_mins_weekly: bike,    // NEW
+            other_sports_mins_weekly: other, // NEW
             local_timestamp: new Date().toISOString(),
             is_synced: true
           }]);
@@ -357,7 +376,8 @@ export default function ResidentApp() {
               </div>
 
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                {/* Full-width Barangay */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
                     <MapPin className="w-3 h-3" /> Barangay
@@ -374,22 +394,39 @@ export default function ResidentApp() {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                    <User className="w-3 h-3" /> Age Group
-                  </label>
-                  <select 
-                    value={formData.age_group}
-                    onChange={(e) => setFormData({...formData, age_group: e.target.value})}
-                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-bold text-sm outline-none focus:border-[#1E40AF] transition-all"
-                  >
-                    <option value="18-24">18-24 yrs</option>
-                    <option value="25-34">25-34 yrs</option>
-                    <option value="35-44">35-44 yrs</option>
-                    <option value="45-54">45-54 yrs</option>
-                    <option value="55-64">55-64 yrs</option>
-                    <option value="65+">65+ yrs</option>
-                  </select>
+                {/* 2-Column Grid for Age and Gender */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <User className="w-3 h-3" /> Age Group
+                    </label>
+                    <select 
+                      value={formData.age_group}
+                      onChange={(e) => setFormData({...formData, age_group: e.target.value})}
+                      className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-bold text-sm outline-none focus:border-[#1E40AF] transition-all"
+                    >
+                      <option value="18-24">18-24 yrs</option>
+                      <option value="25-34">25-34 yrs</option>
+                      <option value="35-44">35-44 yrs</option>
+                      <option value="45-54">45-54 yrs</option>
+                      <option value="55-64">55-64 yrs</option>
+                      <option value="65+">65+ yrs</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                      <User className="w-3 h-3" /> Gender
+                    </label>
+                    <select 
+                      value={formData.gender}
+                      onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                      className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-bold text-sm outline-none focus:border-[#1E40AF] transition-all"
+                    >
+                      <option value="Female">Female</option>
+                      <option value="Male">Male</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -409,20 +446,40 @@ export default function ResidentApp() {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Avg. Weekly Exercise
+                  <Clock className="w-3 h-3" /> Weekly Exercise Breakdown (Mins)
                 </label>
-                <div className="relative">
+                <div className="grid grid-cols-2 gap-3">
                   <input 
                     type="number" 
-                    value={formData.mins}
-                    onChange={(e) => setFormData({...formData, mins: e.target.value})}
-                    placeholder="Total this week"
-                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-2xl outline-none focus:border-[#1E40AF] transition-all"
+                    value={formData.walkMins}
+                    onChange={(e) => setFormData({...formData, walkMins: e.target.value})}
+                    placeholder="Walking"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-lg outline-none focus:border-[#1E40AF] transition-all placeholder:text-sm placeholder:font-bold"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-300 text-sm">MINS</span>
+                  <input 
+                    type="number" 
+                    value={formData.runMins}
+                    onChange={(e) => setFormData({...formData, runMins: e.target.value})}
+                    placeholder="Running"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-lg outline-none focus:border-[#1E40AF] transition-all placeholder:text-sm placeholder:font-bold"
+                  />
+                  <input 
+                    type="number" 
+                    value={formData.bikeMins}
+                    onChange={(e) => setFormData({...formData, bikeMins: e.target.value})}
+                    placeholder="Biking"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-lg outline-none focus:border-[#1E40AF] transition-all placeholder:text-sm placeholder:font-bold"
+                  />
+                  <input 
+                    type="number" 
+                    value={formData.otherMins}
+                    onChange={(e) => setFormData({...formData, otherMins: e.target.value})}
+                    placeholder="Other"
+                    className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 font-black text-lg outline-none focus:border-[#1E40AF] transition-all placeholder:text-sm placeholder:font-bold"
+                  />
                 </div>
-                <p className="text-[10px] text-slate-400 italic px-1">
-                  Your estimated weekly intentional physical activity total.
+                <p className="text-[10px] text-slate-400 italic px-1 mt-2">
+                  Your estimated weekly intentional physical activity total per category.
                 </p>
               </div>
 
@@ -492,7 +549,14 @@ export default function ResidentApp() {
             
             <button 
               onClick={() => {
-                setFormData(prev => ({ ...prev, steps: '', mins: '' })); // Keep user's selections, clear inputs
+                setFormData(prev => ({ 
+                  ...prev, 
+                  steps: '', 
+                  walkMins: '', 
+                  runMins: '', 
+                  bikeMins: '', 
+                  otherMins: '' 
+                })); // Keep user's selections, clear inputs
                 setSyncStep('choice');
               }}
               className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black active:scale-95 transition-all"
