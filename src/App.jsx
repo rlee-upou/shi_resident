@@ -366,7 +366,7 @@ export default function ResidentApp() {
                     setCaptchaError('');
                     setSyncStep('captcha');
                   }}
-                  className="w-full py-4 bg-white border-2 border-slate-100 text-slate-700 font-black rounded-2xl flex items-center justify-center gap-3 transition-all hover:border-[#1E40AF] hover:text-[#1E40AF] shadow-sm"
+                  className="w-full bg-white p-5 rounded-3xl border-2 border-slate-100 shadow-sm flex items-center gap-4 hover:border-[#1E40AF] transition-all group"
                 >
               <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <PlusCircle className="w-8 h-8" />
