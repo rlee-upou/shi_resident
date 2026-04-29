@@ -70,6 +70,13 @@ const BARANGAY_ID_KEY = 'smarthealthindex_barangay_id';
 
 export default function ResidentApp() {
   const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
+
+  // --- CAPTCHA State ---
+  const [captchaNum1, setCaptchaNum1] = useState(0);
+  const [captchaNum2, setCaptchaNum2] = useState(0);
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
   
@@ -123,6 +130,20 @@ export default function ResidentApp() {
     }
     fetchBarangays();
   }, []);
+
+  // --- CAPTCHA Verification ---
+  const handleVerifyCaptcha = (e) => {
+    e.preventDefault();
+    if (parseInt(captchaInput) === (captchaNum1 + captchaNum2)) {
+      setSyncStep('manual'); // Human verified, proceed to form!
+    } else {
+      setCaptchaError('Incorrect answer. Please try again.');
+      setCaptchaInput('');
+      // Generate a new math problem on failure
+      setCaptchaNum1(Math.floor(Math.random() * 10) + 1);
+      setCaptchaNum2(Math.floor(Math.random() * 10) + 1);
+    }
+  };
 
   // Handle Supabase Submission & Rolling Average Math
   const handleManualSubmit = async (e) => {
@@ -338,9 +359,15 @@ export default function ResidentApp() {
             </button>
 
             <button 
-              onClick={() => setSyncStep('manual')}
-              className="w-full bg-white p-5 rounded-3xl border-2 border-slate-100 shadow-sm flex items-center gap-4 hover:border-indigo-600 transition-all group"
-            >
+                  onClick={() => {
+                    setCaptchaNum1(Math.floor(Math.random() * 10) + 1);
+                    setCaptchaNum2(Math.floor(Math.random() * 10) + 1);
+                    setCaptchaInput('');
+                    setCaptchaError('');
+                    setSyncStep('captcha');
+                  }}
+                  className="w-full py-4 bg-white border-2 border-slate-100 text-slate-700 font-black rounded-2xl flex items-center justify-center gap-3 transition-all hover:border-[#1E40AF] hover:text-[#1E40AF] shadow-sm"
+                >
               <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                 <PlusCircle className="w-8 h-8" />
               </div>
@@ -358,6 +385,59 @@ export default function ResidentApp() {
                </p>
             </div>
           </div>
+        )}
+
+        {/* STEP 1.5: CAPTCHA SECURITY CHECK */}
+        {syncStep === 'captcha' && (
+          <section className="bg-white rounded-3xl shadow-sm p-6 border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-blue-50 text-[#1E40AF] rounded-full flex items-center justify-center mb-2">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-black text-slate-900">Security Check</h2>
+              <p className="text-sm font-medium text-slate-500">
+                Please solve this simple math problem to verify you are human.
+              </p>
+              
+              <form onSubmit={handleVerifyCaptcha} className="w-full space-y-4 mt-4">
+                {captchaError && (
+                  <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-xs font-bold border border-rose-100">
+                    {captchaError}
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-center gap-4 text-3xl font-black text-slate-900 bg-slate-50 py-6 rounded-2xl border-2 border-slate-100">
+                  <span>{captchaNum1}</span>
+                  <span className="text-slate-400">+</span>
+                  <span>{captchaNum2}</span>
+                  <span className="text-slate-400">=</span>
+                  <input
+                    type="number"
+                    required
+                    value={captchaInput}
+                    onChange={(e) => setCaptchaInput(e.target.value)}
+                    className="w-20 p-2 bg-white border-2 border-slate-200 rounded-xl text-center focus:border-[#1E40AF] outline-none transition-all shadow-inner"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setSyncStep('choice')}
+                    className="flex-1 py-4 bg-slate-50 text-slate-600 font-bold rounded-2xl hover:bg-slate-100 transition-colors"
+                  >
+                    CANCEL
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-4 bg-[#1E40AF] text-white font-black rounded-2xl shadow-lg shadow-blue-900/20 hover:bg-blue-800 transition-all active:scale-95"
+                  >
+                    VERIFY
+                  </button>
+                </div>
+              </form>
+            </div>
+          </section>
         )}
 
         {/* STEP 2: MANUAL FORM */}
