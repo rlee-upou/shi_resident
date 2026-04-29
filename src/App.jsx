@@ -537,15 +537,6 @@ export default function ResidentApp() {
             <p className="text-slate-500 text-sm mb-8">
               Your contribution has been securely synced to the Quezon City database.
             </p>
-
-            {/* BARANGAY PROGRESS */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-8 text-left">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Barangay Goal Progress</p>
-              <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-500 h-full w-[72%] rounded-full animate-pulse"></div>
-              </div>
-              <p className="text-xs font-bold text-slate-600">{getSelectedBarangayName()} is 72% of the way to the health baseline goal!</p>
-            </div>
             
             <button 
               onClick={() => {
