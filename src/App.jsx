@@ -280,7 +280,7 @@ export default function ResidentApp() {
 
   const handleDownloadAccept = () => {
     // Replace this URL with your actual public Google Cloud Storage link
-    const apkUrl = 'https://drive.google.com/file/d/1et_KmtvzckZOGZ4Iod6-ViDmmIq-c4-c/view?usp=sharing';
+    const apkUrl = 'https://drive.google.com/file/d/1s3UJNLsIHm9G2yQ0ze5Da9khJDq6ht2G/view?usp=sharing';
     
     // Create an invisible anchor tag to trigger the browser's download manager
     const link = document.createElement('a');
