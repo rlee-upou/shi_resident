@@ -580,16 +580,16 @@ export default function ResidentApp() {
 
         {/* STEP 2: GADGET DOWNLOAD PROMPT */}
         {syncStep === 'gadget-download' && (
-          <div className="text-center py-10 animate-in fade-in duration-500">
-            <div className="w-24 h-24 bg-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-              <Activity className="w-12 h-12 text-[#1E40AF]" />
+          <div className="text-center py-6 animate-in fade-in duration-500 max-w-sm mx-auto">
+            <div className="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Activity className="w-10 h-10 text-[#1E40AF]" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 mb-4">App Required</h2>
-            <p className="text-slate-500 text-sm mb-8 px-6">
-              To automatically sync your gadget, you need to download and install the secure SHI-Sync application. Do you want to download the app now?
+            <p className="text-slate-500 text-sm mb-6 px-4">
+              To automatically sync your gadget, you need to download and install the secure SHI-Sync application for Android.
             </p>
             
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 mb-8">
               <button 
                 onClick={handleDownloadAccept}
                 className="w-full py-4 bg-[#1E40AF] text-white rounded-2xl font-black shadow-lg shadow-blue-900/20 active:scale-95 transition-all"
@@ -603,6 +603,32 @@ export default function ResidentApp() {
               >
                 REJECT
               </button>
+            </div>
+
+            {/* INSTRUCTION BOX */}
+            <div className="bg-slate-50 rounded-2xl p-5 text-left border border-slate-100">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                How to Install & Uninstall
+              </h4>
+              
+              <div className="space-y-4">
+                <div>
+                  <p className="text-[11px] font-black text-slate-700 mb-1">INSTALLATION</p>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    1. Tap Download and open the <strong>shi_sync.apk</strong> file.<br/>
+                    2. If prompted, allow your browser to <strong>"Install Unknown Apps"</strong>.<br/>
+                    3. Tap Install. Once finished, open the app, then Read and Accept the permissions.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-black text-slate-700 mb-1">UNINSTALLATION</p>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Long-press the <strong>SHI-Sync</strong> icon on your home screen, tap the <strong>(i) info</strong> button or "Uninstall," and confirm.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
