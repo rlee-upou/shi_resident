@@ -183,52 +183,69 @@ export default function ResidentApp() {
       // DATABASE SYNC LOGIC (BLIND UPSERT DESIGN)
       // ==========================================
 
-      // 1. IDENTITY UPSERT
-      // Generate ID client-side if it doesn't exist to avoid SELECT queries
+      // ==========================================
+      // DATABASE SYNC LOGIC (RLS-COMPLIANT DESIGN)
+      // ==========================================
+
+      // 1. IDENTITY SYNC
+      let isNewResident = false;
+      //let currentResidentId = localStorage.getItem(RESIDENT_ID_KEY);
+      
+      // If no ID exists, generate one and mark as new
       if (!currentResidentId) {
         currentResidentId = crypto.randomUUID();
         localStorage.setItem(RESIDENT_ID_KEY, currentResidentId); 
+        isNewResident = true;
       }
 
-      // Perform a Blind Upsert (Update if exists, Insert if it doesn't)
-      const { error: residentError } = await supabase
-        .from('residents')
-        .upsert({
-          id: currentResidentId,
-          barangay_id: parseInt(formData.barangay_id),
-          age_group: formData.age_group,
-          gender_at_birth: formData.gender,
-          primary_source: 'WEB_PORTAL'
-        }, { onConflict: 'id' }); // No .select() chained here!
+      const residentPayload = {
+        id: currentResidentId,
+        barangay_id: parseInt(formData.barangay_id),
+        age_group: formData.age_group,
+        gender_at_birth: formData.gender,
+        primary_source: 'WEB_PORTAL'
+      };
 
-      if (residentError) throw residentError;
+      // Split Upsert into explicit Insert or Update to bypass Postgres visibility quirks
+      if (isNewResident) {
+        const { error: residentError } = await supabase.from('residents').insert(residentPayload);
+        if (residentError) throw residentError;
+      } else {
+        const { error: residentError } = await supabase.from('residents').update(residentPayload).eq('id', currentResidentId);
+        if (residentError) throw residentError;
+      }
            
-      // 2. ACTIVITY LOG UPSERT
-      // Retrieve or generate the single log ID for this device
+      // 2. ACTIVITY LOG SYNC
+      let isNewLog = false;
       let currentLogId = localStorage.getItem(ACTIVITY_LOG_ID_KEY);
+      
       if (!currentLogId) {
         currentLogId = crypto.randomUUID();
         localStorage.setItem(ACTIVITY_LOG_ID_KEY, currentLogId);
+        isNewLog = true;
       }
 
-      // Perform Blind Upsert for the Activity Log
-      const { error: logError } = await supabase
-        .from('activity_logs')
-        .upsert({
-          id: currentLogId,
-          resident_id: currentResidentId,
-          source_type: 'WEB_PORTAL',
-          daily_steps: dbSteps,
-          weekly_exercise_mins: dbMins,
-          walking_mins_weekly: walk,   
-          running_mins_weekly: run,    
-          biking_mins_weekly: bike,    
-          other_sports_mins_weekly: other, 
-          local_timestamp: new Date().toISOString(),
-          is_synced: true
-        }, { onConflict: 'id' }); // No .select() chained here!
+      const logPayload = {
+        id: currentLogId,
+        resident_id: currentResidentId,
+        source_type: 'WEB_PORTAL',
+        daily_steps: dbSteps,
+        weekly_exercise_mins: dbMins,
+        walking_mins_weekly: walk,   
+        running_mins_weekly: run,    
+        biking_mins_weekly: bike,    
+        other_sports_mins_weekly: other, 
+        local_timestamp: new Date().toISOString(),
+        is_synced: true
+      };
 
-      if (logError) throw logError;
+      if (isNewLog) {
+        const { error: logError } = await supabase.from('activity_logs').insert(logPayload);
+        if (logError) throw logError;
+      } else {
+        const { error: logError } = await supabase.from('activity_logs').update(logPayload).eq('id', currentLogId);
+        if (logError) throw logError;
+      }
 
       // Success transition
       setSyncStep('success');
