@@ -67,7 +67,6 @@ const supabase = createClient(supabaseUrl, supabaseKey); // Swap to createClient
 const RESIDENT_ID_KEY = 'smarthealthindex_resident_id';
 const AGE_GROUP_KEY = 'smarthealthindex_age_group';
 const BARANGAY_ID_KEY = 'smarthealthindex_barangay_id';
-const ACTIVITY_LOG_ID_KEY = 'smarthealthindex_activity_log_id'; // <-- NEW LINE ADDED
 
 export default function ResidentApp() {
   const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
@@ -179,72 +178,88 @@ export default function ResidentApp() {
       // DATABASE SYNC LOGIC
       // ==========================================
 
-      // ==========================================
-      // DATABASE SYNC LOGIC (BLIND UPSERT DESIGN)
-      // ==========================================
-
-      // ==========================================
-      // DATABASE SYNC LOGIC (RLS-COMPLIANT DESIGN)
-      // ==========================================
-
-      // 1. IDENTITY SYNC
-      let isNewResident = false;
-      //let currentResidentId = localStorage.getItem(RESIDENT_ID_KEY);
-      
-      // If no ID exists, generate one and mark as new
+      // 1. IDENTITY CHECK: Create resident ONLY if they don't exist
       if (!currentResidentId) {
-        currentResidentId = crypto.randomUUID();
+        const { data: residentData, error: residentError } = await supabase
+          .from('residents')
+          .insert([{
+            barangay_id: parseInt(formData.barangay_id),
+            age_group: formData.age_group,
+            gender_at_birth: formData.gender, // NEW
+            primary_source: 'WEB_PORTAL'
+          }])
+          .select()
+          .single();
+
+        if (residentError) throw residentError;
+        
+        currentResidentId = residentData.id;
         localStorage.setItem(RESIDENT_ID_KEY, currentResidentId); 
-        isNewResident = true;
-      }
-
-      const residentPayload = {
-        id: currentResidentId,
-        barangay_id: parseInt(formData.barangay_id),
-        age_group: formData.age_group,
-        gender_at_birth: formData.gender,
-        primary_source: 'WEB_PORTAL'
-      };
-
-      // Split Upsert into explicit Insert or Update to bypass Postgres visibility quirks
-      if (isNewResident) {
-        const { error: residentError } = await supabase.from('residents').insert(residentPayload);
-        if (residentError) throw residentError;
       } else {
-        const { error: residentError } = await supabase.from('residents').update(residentPayload).eq('id', currentResidentId);
-        if (residentError) throw residentError;
-      }
-           
-      // 2. ACTIVITY LOG SYNC
-      let isNewLog = false;
-      let currentLogId = localStorage.getItem(ACTIVITY_LOG_ID_KEY);
-      
-      if (!currentLogId) {
-        currentLogId = crypto.randomUUID();
-        localStorage.setItem(ACTIVITY_LOG_ID_KEY, currentLogId);
-        isNewLog = true;
+        // Update their age group and barangay just in case they changed it in the form
+        const { data: updatedResident, error: updateResidentError } = await supabase
+          .from('residents')
+          .update({ 
+            age_group: formData.age_group,
+            barangay_id: parseInt(formData.barangay_id),
+            gender_at_birth: formData.gender // NEW
+          })
+          .eq('id', currentResidentId)
+          .select();
+
+        if (updateResidentError) throw updateResidentError;
+
+        // If the DB was cleared during testing, the ID in localStorage is stale.
+        if (!updatedResident || updatedResident.length === 0) {
+          localStorage.removeItem(RESIDENT_ID_KEY);
+          throw new Error("Profile not found in database. Local memory has been reset. Please press submit again.");
+        }
       }
 
-      const logPayload = {
-        id: currentLogId,
-        resident_id: currentResidentId,
-        source_type: 'WEB_PORTAL',
-        daily_steps: dbSteps,
-        weekly_exercise_mins: dbMins,
-        walking_mins_weekly: walk,   
-        running_mins_weekly: run,    
-        biking_mins_weekly: bike,    
-        other_sports_mins_weekly: other, 
-        local_timestamp: new Date().toISOString(),
-        is_synced: true
-      };
+      // 2. SINGLE ENTRY CHECK: Find if the resident has ANY existing log
+      const { data: existingLogs, error: checkError } = await supabase
+        .from('activity_logs')
+        .select('id')
+        .eq('resident_id', currentResidentId)
+        .limit(1);
 
-      if (isNewLog) {
-        const { error: logError } = await supabase.from('activity_logs').insert(logPayload);
-        if (logError) throw logError;
+      if (checkError) throw checkError;
+
+      if (existingLogs && existingLogs.length > 0) {
+        // SCENARIO A: Update the resident's single existing database record
+        const { error: updateError } = await supabase
+          .from('activity_logs')
+          .update({
+            daily_steps: dbSteps,
+            weekly_exercise_mins: dbMins,
+            walking_mins_weekly: walk,   // NEW
+            running_mins_weekly: run,    // NEW
+            biking_mins_weekly: bike,    // NEW
+            other_sports_mins_weekly: other, // NEW
+            local_timestamp: new Date().toISOString()
+          })
+          .eq('id', existingLogs[0].id);
+
+        if (updateError) throw updateError;
+        
       } else {
-        const { error: logError } = await supabase.from('activity_logs').update(logPayload).eq('id', currentLogId);
-        if (logError) throw logError;
+        // SCENARIO B: Insert new database record
+        const { error: insertError } = await supabase
+          .from('activity_logs')
+          .insert([{
+            resident_id: currentResidentId,
+            source_type: 'WEB_PORTAL',
+            daily_steps: dbSteps,
+            weekly_exercise_mins: dbMins,
+            walking_mins_weekly: walk,   // NEW
+            running_mins_weekly: run,    // NEW
+            biking_mins_weekly: bike,    // NEW
+            other_sports_mins_weekly: other, // NEW
+            local_timestamp: new Date().toISOString(),
+            is_synced: true
+          }]);
+
+        if (insertError) throw insertError;
       }
 
       // Success transition
