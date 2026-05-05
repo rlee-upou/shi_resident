@@ -67,6 +67,9 @@ const supabase = createClient(supabaseUrl, supabaseKey); // Swap to createClient
 const RESIDENT_ID_KEY = 'smarthealthindex_resident_id';
 const AGE_GROUP_KEY = 'smarthealthindex_age_group';
 const BARANGAY_ID_KEY = 'smarthealthindex_barangay_id';
+const ACTIVITY_DATA_KEY = 'shi_resident_activity_data';
+
+
 
 export default function ResidentApp() {
   const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
@@ -111,7 +114,24 @@ export default function ResidentApp() {
     // Check local storage for identity and past history
     try {
       const existingResidentId = localStorage.getItem(RESIDENT_ID_KEY);
-      if (existingResidentId) setIsReturningUser(true);
+      if (existingResidentId) {
+        setIsReturningUser(true);
+        
+        // --- NEW CHANGE: Load previously saved activity data from local storage ---
+        const savedActivityData = localStorage.getItem(ACTIVITY_DATA_KEY);
+        if (savedActivityData) {
+          const parsedData = JSON.parse(savedActivityData);
+          setFormData(prev => ({
+            ...prev,
+            steps: parsedData.steps || '',
+            walkMins: parsedData.walkMins || '',
+            runMins: parsedData.runMins || '',
+            bikeMins: parsedData.bikeMins || '',
+            otherMins: parsedData.otherMins || '',
+            gender: parsedData.gender || 'Female'
+          }));
+        }
+      }
 
       // Retrieve previously saved preferences if they exist
       const savedAgeGroup = localStorage.getItem(AGE_GROUP_KEY);
@@ -145,7 +165,7 @@ export default function ResidentApp() {
     }
   };
 
-  // Handle Supabase Submission & Rolling Average Math
+  // Handle Supabase Submission
   const handleManualSubmit = async (e) => {
     e.preventDefault();
     if (!formData.steps || !formData.barangay_id) return;
@@ -163,6 +183,20 @@ export default function ResidentApp() {
       // Save the selected age group to local storage for their next visit
       localStorage.setItem(AGE_GROUP_KEY, formData.age_group);
       localStorage.setItem(BARANGAY_ID_KEY, formData.barangay_id);
+
+      // --- NEW CHANGE: Save activity data to local storage ---
+      const activityDataToSave = {
+        steps: formData.steps,
+        walkMins: formData.walkMins,
+        runMins: formData.runMins,
+        bikeMins: formData.bikeMins,
+        otherMins: formData.otherMins,
+        gender: formData.gender
+      };
+      localStorage.setItem(ACTIVITY_DATA_KEY, JSON.stringify(activityDataToSave));
+      // -------------------------------------------------------
+
+      alert('Health data successfully submitted!');
 
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
