@@ -196,8 +196,6 @@ export default function ResidentApp() {
       localStorage.setItem(ACTIVITY_DATA_KEY, JSON.stringify(activityDataToSave));
       // -------------------------------------------------------
 
-      alert('Health data successfully submitted!');
-
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
       // Replace: let dbMins = parseInt(formData.mins) || 0;
