@@ -9,59 +9,11 @@ import {
 // ==========================================
 // SUPABASE INITIALIZATION
 // ==========================================
-// --- CANVAS PREVIEW MOCK ---
-const createClientMock = () => {
-  return {
-    from: (tableName) => {
-      const chain = {
-        select: () => {
-          const res = Promise.resolve({
-            data: tableName === 'barangays' 
-              ? [
-                  { id: 1, name: 'Bgy. UP Campus' },
-                  { id: 2, name: 'Bgy. Fairview' },
-                  { id: 3, name: 'Bgy. Payatas' },
-                  { id: 4, name: 'Bgy. Socorro' }
-                ]
-              : [], 
-            error: null
-          });
-          res.eq = () => {
-            const eqRes = Promise.resolve({ data: [], error: null });
-            eqRes.gte = () => {
-              const gteRes = Promise.resolve({ data: [], error: null });
-              gteRes.lte = () => Promise.resolve({ data: [], error: null });
-              return gteRes;
-            };
-            return eqRes;
-          };
-          return res;
-        },
-        insert: (payload) => {
-          const res = Promise.resolve({ error: null });
-          res.select = () => {
-            const sel = Promise.resolve({ data: [payload[0]], error: null });
-            sel.single = () => Promise.resolve({ data: { id: 'mock-uuid-123', ...payload[0] }, error: null });
-            return sel;
-          };
-          return res;
-        },
-        update: (payload) => {
-          const res = Promise.resolve({ error: null });
-          res.eq = () => Promise.resolve({ error: null });
-          return res;
-        }
-      };
-      return chain;
-    }
-  };
-};
-// ---------------------------
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
-const supabase = createClient(supabaseUrl, supabaseKey); // Swap to createClient for production
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Constants for local storage keys
 const RESIDENT_ID_KEY = 'smarthealthindex_resident_id';
@@ -69,10 +21,8 @@ const AGE_GROUP_KEY = 'smarthealthindex_age_group';
 const BARANGAY_ID_KEY = 'smarthealthindex_barangay_id';
 const ACTIVITY_DATA_KEY = 'shi_resident_activity_data';
 
-
-
 export default function ResidentApp() {
-  const [syncStep, setSyncStep] = useState('choice'); // choice, manual, strava, success
+  const [syncStep, setSyncStep] = useState('choice'); 
 
   // --- CAPTCHA State ---
   const [captchaNum1, setCaptchaNum1] = useState(0);
@@ -117,7 +67,7 @@ export default function ResidentApp() {
       if (existingResidentId) {
         setIsReturningUser(true);
         
-        // --- NEW CHANGE: Load previously saved activity data from local storage ---
+        // --- Load previously saved activity data from local storage ---
         const savedActivityData = localStorage.getItem(ACTIVITY_DATA_KEY);
         if (savedActivityData) {
           const parsedData = JSON.parse(savedActivityData);
@@ -198,7 +148,6 @@ export default function ResidentApp() {
 
       // Variables to send to database
       let dbSteps = parseInt(formData.steps) || 0;
-      // Replace: let dbMins = parseInt(formData.mins) || 0;
       
       const walk = parseInt(formData.walkMins) || 0;
       const run = parseInt(formData.runMins) || 0;
@@ -311,7 +260,7 @@ export default function ResidentApp() {
   };
 
   const handleDownloadAccept = () => {
-    // Replace this URL with your actual public Google Cloud Storage link
+    // Replace this URL with your actual public Cloud Storage link
     const apkUrl = 'https://drive.google.com/file/d/1s3UJNLsIHm9G2yQ0ze5Da9khJDq6ht2G/view?usp=sharing';
     
     // Create an invisible anchor tag to trigger the browser's download manager
