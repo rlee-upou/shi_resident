@@ -1,16 +1,59 @@
-# React + Vite
+SHI Web Applications - Technical Deployment Guide
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This guide provides the technical steps required to set up, test, and deploy the web portals (Landing, Resident, Agent, and Dashboard) for the Smart Health Index system.
 
-Currently, two official plugins are available:
+1. Local Environment Setup
+Clone Repository
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+git clone https://github.com/rlee-upou/shi_resident
+cd rlee-upou/shi_resident
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Install Dependencies
 
-## Expanding the ESLint configuration
+npm install
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Configure Local Environment
+Create a .env.local file in the root directory and populate it with your project keys:
+
+VITE_SUPABASE_URL=[https://your-project-id.supabase.co](https://your-project-id.supabase.co)
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
+
+
+Test Locally
+Start the development server to verify the build and connection:
+
+npm run dev
+
+Access the portals via the local addresses provided (typically http://localhost:5173).
+
+2. Supabase Backend Initialization
+Before deployment, ensure the PostgreSQL backend is prepared:
+- Schema: Run the schema.sql migration script in the Supabase SQL Editor.
+- Roles: Ensure the user_roles table contains the necessary entries for authenticated portals (Agent/Researcher).
+
+3. Production Deployment (Vercel)
+Project Creation
+- Log in to the Vercel Dashboard.
+- Click "New Project" and import your Git repository.
+
+Build Configuration
+Vercel should automatically detect the framework. Ensure the following settings:
+
+- Framework Preset: Vite
+- Build Command: npm run build
+- Output Directory: dist
+- Environment Variables (CRITICAL)
+
+Add the following keys in Project Settings > Environment Variables to enable cloud connectivity:
+
+- Variable Name > VITE_SUPABASE_URL
+- Value > Your Supabase Project URL
+
+- Variable Name > VITE_SUPABASE_ANON_KEY
+- Value > > Your Supabase Anonymous API Key
+
+Finalize
+- Click "Deploy".
+
+Once the build finishes, Vercel will provide a production URL secured with SSL/TLS.
